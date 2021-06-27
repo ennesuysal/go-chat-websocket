@@ -5,8 +5,7 @@
   
 	docker-compose up
 
-### Building and Running the Client
-> Run command below at client directory.
+### Running the Client
+> Just open jsClient/index.html with a browser that support websocket.
 
-	go build .
-	./client
+> client connect localhost:1234 by default, to change you must change the address at the html file.
