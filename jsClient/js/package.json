@@ -1,0 +1,35 @@
+{
+  "name": "gotalk",
+  "version": "1.2.1",
+  "license": "MIT",
+  "description": "Gotalk client library",
+  "author": {
+    "name": "Rasmus Andersson",
+    "email": "rsms@rsms.me"
+  },
+  "homepage": "https://github.com/rsms/gotalk/tree/master/js",
+  "bugs": {
+    "url": "https://github.com/rsms/gotalk/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rsms/gotalk.git"
+  },
+  "files": [
+    "LICENSE.txt",
+    "README.md",
+    "gotalk.d.ts",
+    "gotalk.js",
+    "gotalk.js.map"
+  ],
+  "main": "gotalk.js",
+  "types": "gotalk.d.ts",
+  "scripts": {
+    "build": "node build.js",
+    "build-debug": "node build.js -g",
+    "build-dev": "node build.js -g -w"
+  },
+  "devDependencies": {
+    "estrella": "^1.2.8"
+  }
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<!-- load the built-in JS library -->
+		<script type="text/javascript" src="./js/gotalk.js"></script>
+	</head>
+
+		<table width="100%">
+			<tr>
+				<td>
+					<table>
+						<tr>
+							<td>Name:</td>
+							<td><input type="text" id="name"/></td>
+						</tr>		<tr>
+							<td>Surname:</td>
+							<td><input type="text" id="surname"/></td>
+						</tr>
+						<tr>
+							<td>Username:</td>
+							<td><input type="text" id="username"/></td>
+						</tr>
+						<tr>
+							<td colspan="2" align="right"><button onclick="logIn()">Login</button></td>
+						</tr>
+					</table>
+				</td>
+				<td>
+					<table>
+						<tr>
+							<td><textarea id="msg" rows="5" cols="70"></textarea></td>
+						</tr>
+						<tr>
+							<td align="right">
+								<select id="rcv">
+									
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td align="right"><button onclick="sendMessage()">Send</button></td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+
+		<div id="msg">
+
+		</div>
+	<script type="text/javascript" src="./fn/main.js"></script>
+	</body>
+</html>
