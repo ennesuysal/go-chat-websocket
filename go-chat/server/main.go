@@ -54,7 +54,10 @@ func onConnect(s *gotalk.WebSocket) {
 
 		if s.UserData != nil {
 			u, _ := api.QueryUserbyToken(context.Background(), s.UserData.(string), db)
-			u.Update().SetIsOnline(0).Save(context.Background())
+			_, err := u.Update().SetIsOnline(0).Save(context.Background())
+			if err != nil {
+				log.Printf("SetIsOnline(0) failed.\n")
+			}
 			broadcast("hasLeft", u.Username, s.UserData.(string))
 		}
 
@@ -73,14 +76,22 @@ func broadcast(name string, in interface{}, token string) {
 	defer socksmu.RUnlock()
 	for s := range socks {
 		if s.UserData != token {
-			s.Notify(name, in)
+			err := s.Notify(name, in)
+			if err != nil {
+				log.Printf("Notify: %s failed.\n", name)
+			}
 		}
 	}
 }
 
 func server() {
 	socks = make(map[*gotalk.WebSocket]int)
-	defer db.Close()
+	defer func(){
+		err := db.Close()
+		if err != nil {
+			log.Println("db.Close() failed.")
+		}
+	}()
 
 	gotalk.Handle("sendMsg", func(in Msg) error{
 		u, _ := api.QueryUserbyToken(context.Background(), in.Tkn, db)
@@ -90,13 +101,22 @@ func server() {
 			socksmu.RLock()
 			defer socksmu.RUnlock()
 			for s := range socks {
-				u2, _ := api.QueryUserbyToken(context.Background(), s.UserData.(string), db)
-				if  u2.Username == in.Receiver {
-					s.Notify("newMsg", in)
-					log.Printf("Message sended.")
+				if s.UserData != nil {
+					u2, _ := api.QueryUserbyToken(context.Background(), s.UserData.(string), db)
+					if u2.Username == in.Receiver {
+						err := s.Notify("newMsg", in)
+						if err == nil {
+							log.Printf("Message sended.\n")
+						} else {
+							log.Printf("Message sending failed.\n")
+						}
+					}
 				}
 			}
-			message.Update().SetSeen(1).Save(context.Background())
+			_, err := message.Update().SetSeen(1).Save(context.Background())
+			if err != nil {
+				log.Printf("SetSeen(1) failed.\n")
+			}
 		}
 
 		return nil
@@ -111,7 +131,10 @@ func server() {
 
 		t := md5.Sum([]byte(in.Username))
 		token := Token{Tkn: hex.EncodeToString(t[:])}
-		user.Update().SetToken(token.Tkn).SetIsOnline(1).Save(context.Background())
+		_, err := user.Update().SetToken(token.Tkn).SetIsOnline(1).Save(context.Background())
+		if err != nil {
+			log.Printf("Inserting user token to db failed.\n")
+		}
 		s.UserData = token.Tkn
 		broadcast("isOnline", user.Username, s.UserData.(string))
 
@@ -142,7 +165,7 @@ func server() {
 		msgs, _ := api.QueryLastMessages(context.Background(), u)
 		result := make([]MsgSender, 0)
 		var tmp MsgSender
-		for _, msg := range(msgs) {
+		for _, msg := range msgs {
 			tmp = MsgSender{
 				Text:   msg.Message,
 				Sender: msg.SenderUsername,
@@ -161,7 +184,7 @@ func server() {
 	routes.Handle("/gotalk/", gh)
 
 	// Start server
-	fmt.Printf("Listening on http://%s/\n", server.Addr)
+	fmt.Printf("Listening on ws://%s/\n", server.Addr)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		panic(err)
 	}

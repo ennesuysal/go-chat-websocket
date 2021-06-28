@@ -103,22 +103,6 @@ func CreateMessage(ctx context.Context, client *ent.Client, senderUser string, r
 	return msg, nil
 }
 
-func QueryMessagesUsers(ctx context.Context, user *ent.User) ([]string, error) {
-	// user, _ := QueryUser(ctx, username, client)
-
-	msgs, err := user.QueryMessage().Order(ent.Asc("send_time")).All(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed querying user messages: %w", err)
-	}
-
-	result := make([]string, 0)
-	for _, msg := range msgs {
-		result = append(result, msg.Message)
-	}
-
-	return result, nil
-}
-
 func QueryLastMessages(ctx context.Context, user *ent.User) ([]*ent.Message, error){
 	msgs, err := user.QueryMessage().Where(message.SeenEQ(0)).Order(ent.Asc("send_time")).All(ctx)
 	if err != nil {

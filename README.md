@@ -8,4 +8,4 @@
 ### Running the Client
 > Just open jsClient/index.html with a browser that supports websocket.
 
-> client connect localhost:1234 by default, to change you must change the address at the html file.
+> client connects localhost:1234 by default, to change you must change the address at the jsClient/fn/main.js file.
