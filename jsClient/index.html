@@ -4,50 +4,95 @@
 		<meta charset="utf-8">
 		<!-- load the built-in JS library -->
 		<script type="text/javascript" src="./js/gotalk.js"></script>
+		<style type="text/css">
+			* {
+				padding:  0;
+				margin:  0;
+			}
+			#loginPanel {
+				float: left;
+				width: 50%;
+				padding: 5px;
+			}
+
+			#loginPanel input[type=text] {
+				width: 100%;
+			}
+
+			#msgPanel {
+				float: left;
+				width: 50%;
+				padding: 5px;
+			}
+
+			#msgPanel textarea {
+				width: 100%;
+			}
+
+			#panel {
+				position: fixed;
+				bottom: 5px;
+				height: 20%;
+				width: 95%;
+				padding: 5px;
+				border: 2px solid green;
+			}
+
+			#msgBox {
+				position: fixed;
+				top:  0;
+				height: 75%;
+				width: 95%;
+				padding: 5px;
+				border: 2px solid red;
+				overflow-y: scroll;
+				overflow-x: auto;
+			}
+
+			#container {
+				width:  97%;
+				margin:  0 auto;
+			}
+		</style>
 	</head>
-
-		<table width="100%">
-			<tr>
-				<td>
-					<table>
-						<tr>
-							<td>Name:</td>
-							<td><input type="text" id="name"/></td>
-						</tr>		<tr>
-							<td>Surname:</td>
-							<td><input type="text" id="surname"/></td>
-						</tr>
-						<tr>
-							<td>Username:</td>
-							<td><input type="text" id="username"/></td>
-						</tr>
-						<tr>
-							<td colspan="2" align="right"><button onclick="logIn()">Login</button></td>
-						</tr>
-					</table>
-				</td>
-				<td>
-					<table>
-						<tr>
-							<td><textarea id="msg" rows="5" cols="70"></textarea></td>
-						</tr>
-						<tr>
-							<td align="right">
-								<select id="rcv">
-									
-								</select>
-							</td>
-						</tr>
-						<tr>
-							<td align="right"><button onclick="sendMessage()">Send</button></td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-		</table>
-
-		<div id="msg">
-
+	<body>
+		<div id="container">
+			<div id="msgBox">
+				
+			</div>
+			<div id="panel">
+				<table id="loginPanel">
+					<tr>
+						<td>Name:</td>
+						<td><input type="text" id="name"/></td>
+					</tr>
+					<tr>
+						<td>Surname:</td>
+						<td><input type="text" id="surname"/></td>
+					</tr>
+					<tr>
+						<td>Username:</td>
+						<td><input type="text" id="username"/></td>
+					</tr>
+					<tr>
+						<td colspan="2" align="right"><button onclick="logIn()">Login</button></td>
+					</tr>
+				</table>
+				<table id="msgPanel">
+					<tr>
+						<td colspan="3"><textarea id="msg" rows="4"></textarea></td>
+					</tr>
+					<tr>
+						<td align="left">Receiver:</td>
+						<td align="left">
+							<select id="rcv">
+								
+							</select>
+						</td>
+						<td align="right"><button onclick="sendMessage()">Send</button></td>
+					</tr>
+				</table>
+			</div>
 		</div>
 	<script type="text/javascript" src="./fn/main.js"></script>
 	</body>

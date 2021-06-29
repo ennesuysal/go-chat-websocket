@@ -49,11 +49,14 @@ gotalk.handleNotification('hasLeft', function (m) {
 
 gotalk.handleNotification('newMsg', function (m) {
 	log(m["sender"]+": "+m["text"])
+	var element = document.getElementById("msgBox");
+    element.scrollTop = element.scrollHeight;
 })
 
 function log(message) {
-	document.body.appendChild(document.createTextNode(message))
-	document.body.appendChild(document.createElement("br"));
+	var msgBox = document.getElementById("msgBox")
+	msgBox.appendChild(document.createTextNode(message))
+	msgBox.appendChild(document.createElement("br"));
 }
 
 async function getOnlines() {	
@@ -85,6 +88,8 @@ async function sendMessage() {
 	let res = await c.requestp('sendMsg', {"text": msg, "token": token, "rcv": rcv})
 	log(username+": "+msg)
 	document.getElementById("msg").value = ""
+	var element = document.getElementById("msgBox");
+    element.scrollTop = element.scrollHeight;
 }
 
 async function logIn() {
