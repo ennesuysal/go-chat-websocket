@@ -2,7 +2,6 @@ package main
 
 import (
 	"com.enesuysal/go-chat/api"
-	"com.enesuysal/go-chat/api/ent"
 	"context"
 	"crypto/md5"
 	"encoding/hex"
@@ -54,12 +53,16 @@ func onConnect(s *gotalk.WebSocket) {
 		fmt.Printf("Peer %s diconnected\n", s)
 
 		if s.UserData != nil {
-			u, _ := api.QueryUserbyToken(context.Background(), s.UserData.(string), db)
-			_, err := u.Update().SetIsOnline(0).Save(context.Background())
-			if err != nil {
-				log.Printf("SetIsOnline(0) failed.\n")
+			u, err := api.QueryUserbyToken(context.Background(), s.UserData.(string), db)
+			if err == nil {
+				_, err = u.Update().SetIsOnline(0).Save(context.Background())
+				if err != nil {
+					log.Printf("SetIsOnline(0) failed.\n")
+				} else {
+					broadcast("hasLeft", u.Username, s.UserData.(string))
+				}
 			} else {
-				broadcast("hasLeft", u.Username, s.UserData.(string))
+				log.Println("User not found.")
 			}
 		}
 
@@ -97,12 +100,12 @@ func server() {
 
 	gotalk.Handle("sendMsg", func(in Msg) error{
 		u, err := api.QueryUserbyToken(context.Background(), in.Tkn, db)
-		message := new(ent.Message)
+
 		if err != nil || u == nil {
 			return err
 		}
-		message, err = api.CreateMessage(context.Background(), db, u.Username, in.Receiver, in.Text)
-		if err != nil {
+		message, errMessage := api.CreateMessage(context.Background(), db, u.Username, in.Receiver, in.Text)
+		if errMessage != nil {
 			log.Println("CreateMessage failed.")
 			return nil
 		}
@@ -162,7 +165,12 @@ func server() {
 			return nil, err
 		}
 		users := make([]User, 0)
-		current, _ := api.QueryUserbyToken(context.Background(), t.Tkn, db)
+
+		current, errToken := api.QueryUserbyToken(context.Background(), t.Tkn, db)
+
+		if errToken != nil {
+			return nil, errToken
+		}
 
 		for _, x := range o {
 			if current.Username != x.Username {
@@ -182,7 +190,12 @@ func server() {
 		if err != nil {
 			return nil, err
 		}
-		msgs, _ := api.QueryLastMessages(context.Background(), u)
+		msgs, errMsgs := api.QueryLastMessages(context.Background(), u)
+
+		if errMsgs != nil {
+			return nil, errMsgs
+		}
+
 		result := make([]MsgSender, 0)
 		var tmp MsgSender
 		for _, msg := range msgs {
