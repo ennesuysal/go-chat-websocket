@@ -2,6 +2,7 @@ package main
 
 import (
 	"com.enesuysal/go-chat/api"
+	"com.enesuysal/go-chat/api/ent"
 	"context"
 	"crypto/md5"
 	"encoding/hex"
@@ -57,8 +58,9 @@ func onConnect(s *gotalk.WebSocket) {
 			_, err := u.Update().SetIsOnline(0).Save(context.Background())
 			if err != nil {
 				log.Printf("SetIsOnline(0) failed.\n")
+			} else {
+				broadcast("hasLeft", u.Username, s.UserData.(string))
 			}
-			broadcast("hasLeft", u.Username, s.UserData.(string))
 		}
 
 		socksmu.Lock()
@@ -94,44 +96,57 @@ func server() {
 	}()
 
 	gotalk.Handle("sendMsg", func(in Msg) error{
-		u, _ := api.QueryUserbyToken(context.Background(), in.Tkn, db)
-		if u != nil {
-			message, _ := api.CreateMessage(context.Background(), db, u.Username, in.Receiver, in.Text)
-			in.Sender = u.Username
-			socksmu.RLock()
-			defer socksmu.RUnlock()
-			for s := range socks {
-				if s.UserData != nil {
-					u2, _ := api.QueryUserbyToken(context.Background(), s.UserData.(string), db)
-					if u2.Username == in.Receiver {
-						err := s.Notify("newMsg", in)
-						if err == nil {
-							log.Printf("Message sended.\n")
-						} else {
-							log.Printf("Message sending failed.\n")
-						}
-					}
+		u, err := api.QueryUserbyToken(context.Background(), in.Tkn, db)
+		message := new(ent.Message)
+		if err != nil || u == nil {
+			return err
+		}
+		message, err = api.CreateMessage(context.Background(), db, u.Username, in.Receiver, in.Text)
+		if err != nil {
+			log.Println("CreateMessage failed.")
+			return nil
+		}
+		in.Sender = u.Username
+		socksmu.RLock()
+		defer socksmu.RUnlock()
+		for s := range socks {
+			if s.UserData == nil {
+				return nil
+			}
+			u2, err := api.QueryUserbyToken(context.Background(), s.UserData.(string), db)
+			if u2 == nil || err != nil {
+				return err
+			}
+
+			if u2.Username == in.Receiver {
+				err := s.Notify("newMsg", in)
+				if err == nil {
+					log.Printf("Message sended.\n")
+				} else {
+					log.Printf("Message sending failed.\n")
 				}
 			}
-			_, err := message.Update().SetSeen(1).Save(context.Background())
-			if err != nil {
-				log.Printf("SetSeen(1) failed.\n")
-			}
 		}
-
+		_, err = message.Update().SetSeen(1).Save(context.Background())
+		if err != nil {
+			log.Printf("SetSeen(1) failed.\n")
+		}
 		return nil
 	})
 
 	gotalk.Handle("login", func(s *gotalk.Sock, in User) (*Token, error) {
-		user, _ := api.QueryUser(context.Background(), in.Username, db)
-		if user == nil {
+		user, err := api.QueryUser(context.Background(), in.Username, db)
+		if user == nil || err != nil {
 			log.Println("Kullanıcı bulunamadı, oluşturuluyor...")
-			user, _ = api.CreateUser(context.Background(), in.Username, in.Name, in.Surname, db)
+			user, err = api.CreateUser(context.Background(), in.Username, in.Name, in.Surname, db)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		t := md5.Sum([]byte(in.Username))
 		token := Token{Tkn: hex.EncodeToString(t[:])}
-		_, err := user.Update().SetToken(token.Tkn).SetIsOnline(1).Save(context.Background())
+		_, err = user.Update().SetToken(token.Tkn).SetIsOnline(1).Save(context.Background())
 		if err != nil {
 			log.Printf("Inserting user token to db failed.\n")
 		}
@@ -142,8 +157,10 @@ func server() {
 	})
 
 	gotalk.Handle("online", func(t Token) (*OnLines, error) {
-		o, _ := api.QueryOnlineUsers(context.Background(), db)
-
+		o, err := api.QueryOnlineUsers(context.Background(), db)
+		if err != nil {
+			return nil, err
+		}
 		users := make([]User, 0)
 		current, _ := api.QueryUserbyToken(context.Background(), t.Tkn, db)
 
@@ -161,7 +178,10 @@ func server() {
 	})
 
 	gotalk.Handle("getMsgs", func(token Token)([]MsgSender, error) {
-		u, _ := api.QueryUserbyToken(context.Background(), token.Tkn, db)
+		u, err := api.QueryUserbyToken(context.Background(), token.Tkn, db)
+		if err != nil {
+			return nil, err
+		}
 		msgs, _ := api.QueryLastMessages(context.Background(), u)
 		result := make([]MsgSender, 0)
 		var tmp MsgSender
